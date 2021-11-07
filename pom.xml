@@ -18,6 +18,13 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
         <!--  jmh入门参考：https://blog.csdn.net/ZYC88888/article/details/113741316-->
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
@@ -29,7 +36,7 @@
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>1.32</version>
         </dependency>
-
+        <!-- jmh入门参考：https://zhuanlan.zhihu.com/p/368323278-->
         <dependency>
             <groupId>org.openjdk.jol</groupId>
             <artifactId>jol-core</artifactId>

@@ -3,6 +3,7 @@ package io.wesleyone.tianchi.cloudnative2021.mq.basic;
 import java.nio.ByteBuffer;
 
 /**
+ * 认识ByteBuffer
  * @author http://wesleyone.github.io/
  */
 public class ByteBufferExample {
