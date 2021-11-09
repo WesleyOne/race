@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.openjdk.jol.info.ClassLayout;
 import org.openjdk.jol.info.GraphLayout;
+import org.openjdk.jol.vm.VM;
 
 import java.io.IOException;
 import java.nio.Buffer;
@@ -19,6 +20,23 @@ import java.nio.file.StandardOpenOption;
  * @create 2021/11/7
  */
 public class ByteBufferExampleTest {
+
+    @Test
+    public void vm() {
+        System.out.println(VM.current().details());
+        /**
+         * # WARNING: Unable to attach Serviceability Agent. Unable to attach even with module exceptions: [org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
+         * # Running 64-bit HotSpot VM.
+         * # Using compressed oop with 3-bit shift.
+         * # Using compressed klass with 3-bit shift.
+         * # WARNING | Compressed references base/shifts are guessed by the experiment!
+         * # WARNING | Therefore, computed addresses are just guesses, and ARE NOT RELIABLE.
+         * # WARNING | Make sure to attach Serviceability Agent to get the reliable addresses.
+         * # Objects are 8 bytes aligned.
+         * # Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+         * # Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+         */
+    }
 
     /**
      * 堆内缓冲区实例对象结构
@@ -87,6 +105,23 @@ public class ByteBufferExampleTest {
             return;
         }
         Assert.fail();
+    }
+
+    @Test
+    public void byteObj() {
+        ByteBuffer heapByteBuffer = ByteBuffer.allocate(1024);
+        System.out.println(ClassLayout.parseInstance(heapByteBuffer.array()).toPrintable());
+        /**
+         * [B object internals:
+         * OFF  SZ   TYPE DESCRIPTION               VALUE
+         *   0   8        (object header: mark)     0x0000000000000001 (non-biasable; age: 0)
+         *   8   4        (object header: class)    0x000007a8
+         *  12   4        (array length)            1024
+         *  12   4        (alignment/padding gap)
+         *  16 1024   byte [B.<elements>             N/A
+         * Instance size: 1040 bytes
+         * Space losses: 4 bytes internal + 0 bytes external = 4 bytes total
+         */
     }
 
     /**
