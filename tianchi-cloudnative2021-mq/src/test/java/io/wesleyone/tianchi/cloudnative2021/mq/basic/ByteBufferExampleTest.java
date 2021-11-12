@@ -209,7 +209,8 @@ public class ByteBufferExampleTest {
      */
     @Test
     public void hack_DirectByteBuffer_OutOfLimit() {
-        ByteBuffer.allocateDirect(1024);
+        ByteBuffer direct = ByteBuffer.allocateDirect(Integer.MAX_VALUE);
+        ByteBuffer direct1 = ByteBuffer.allocateDirect(Integer.MAX_VALUE);
         /*
          * 赛题设置堆外内存最大使用大小为-XX:MaxDirectMemorySize=2G
          * 然而这个配置只防"君子"；
@@ -217,8 +218,15 @@ public class ByteBufferExampleTest {
          * 其中 tryReserveMemory(size, cap)就是用来统计和校验可用堆外内存，
          * 那么就有会大佬直接调用unsafe.allocateMemory(size); 跳过以上统计校验过程，获得更大的堆外缓存空间
          */
+        direct.put((byte)0);
     }
 
+    @Test
+    public void hack_DirectByteBuffer_auto_clear() {
+        ByteBuffer direct = ByteBuffer.allocateDirect(Integer.MAX_VALUE/2);
+        direct = null;
+        ByteBuffer direct1 = ByteBuffer.allocateDirect(Integer.MAX_VALUE/2);
+    }
 
 
     private void operation(ByteBuffer byteBuffer) {
@@ -244,6 +252,26 @@ public class ByteBufferExampleTest {
         System.out.println("slice:  "+byteBufferSlice);
     }
 
+    @Test
+    public void read_single_thread() {
+        ByteBuffer directByteBuffer = ByteBuffer.allocateDirect(2*1024);
+        System.out.println("        "+ directByteBuffer);
+        directByteBuffer.position(100);
+        System.out.println("        "+ directByteBuffer);
+        byte b100 = directByteBuffer.get();
+        System.out.println("        "+ directByteBuffer);
+    }
+
+    @Test
+    public void read_multiple_thread() {
+        ByteBuffer directByteBuffer = ByteBuffer.allocateDirect(2*1024);
+        System.out.println("        "+ directByteBuffer);
+        ByteBuffer sliceByteBuffer = directByteBuffer.slice();
+        sliceByteBuffer.position(100);
+        System.out.println("        "+ sliceByteBuffer);
+        byte b100 = sliceByteBuffer.get();
+        System.out.println("        "+ sliceByteBuffer);
+    }
 
 
 }
