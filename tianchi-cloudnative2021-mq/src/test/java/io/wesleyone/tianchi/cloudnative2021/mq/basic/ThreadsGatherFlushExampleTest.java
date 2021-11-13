@@ -79,7 +79,7 @@ public class ThreadsGatherFlushExampleTest {
             });
         }
         countDownLatch.await();
-        System.out.println("single_force cost:"+(System.currentTimeMillis()-start));
+        System.out.println("非聚合刷盘 cost:"+(System.currentTimeMillis()-start));
         fileChannel.close();
         (new File(GATHER_PATH)).delete();
     }
@@ -183,9 +183,9 @@ public class ThreadsGatherFlushExampleTest {
                     if (awaitCount < 10) {
                         condition.await(3, TimeUnit.SECONDS);
                     } else {
-                        awaitCount = 0;
                         // System.out.println("force:"+flushNum.getAndIncrement());
                         fileChannel.force(true);
+                        awaitCount = 0;
                         condition.signalAll();
                     }
                 } catch (InterruptedException | IOException e) {
