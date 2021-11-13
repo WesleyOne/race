@@ -6,6 +6,7 @@ import org.junit.runners.MethodSorters;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
@@ -44,7 +45,7 @@ public class ThreadsGatherFlushExampleTest {
             executor.execute(()->{
                 write(fileChannel, wrotePosition, new byte[4*1024]);
                 try {
-                    fileChannel.force(true);
+                    fileChannel.force(false);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -70,7 +71,7 @@ public class ThreadsGatherFlushExampleTest {
             executor.execute(() -> {
                 this.write(fileChannel, wrotePosition, new byte[4096]);
                 try {
-                    fileChannel.force(true);
+                    fileChannel.force(false);
                 } catch (IOException var5) {
                     var5.printStackTrace();
                 }
@@ -97,7 +98,8 @@ public class ThreadsGatherFlushExampleTest {
             public void run() {
                 try {
                     // System.out.println("force:"+flushNum.getAndIncrement());
-                    fileChannel.force(true);
+                    write(fileChannel, wrotePosition, new byte[40*1024]);
+                    fileChannel.force(false);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -106,7 +108,6 @@ public class ThreadsGatherFlushExampleTest {
         long start = System.currentTimeMillis();
         for(int i=0;i<count;i++){
             executor.execute(()->{
-                write(fileChannel, wrotePosition, new byte[4*1024]);
                 countDownLatch.countDown();
                 try {
                     cyclicBarrier.await(1,TimeUnit.SECONDS);
@@ -117,6 +118,39 @@ public class ThreadsGatherFlushExampleTest {
         }
         countDownLatch.await();
         System.out.println("cyclicBarrier cost:"+(System.currentTimeMillis()-start));
+        fileChannel.close();
+        new File(GATHER_PATH).delete();
+    }
+
+    @Test
+    public void _2_cyclicBarrier_rwd() throws InterruptedException, IOException {
+        RandomAccessFile randomAccessFile = new RandomAccessFile(Paths.get(GATHER_PATH).toFile(), "rwd");
+        FileChannel fileChannel = randomAccessFile.getChannel();
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        AtomicLong wrotePosition = new AtomicLong(0);
+        CountDownLatch countDownLatch = new CountDownLatch(count);
+        // 10个线程写完，最后一个线程执行刷盘
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(10, new Runnable() {
+            private final AtomicInteger flushNum = new AtomicInteger();
+            @Override
+            public void run() {
+                // System.out.println("force:"+flushNum.getAndIncrement());
+                write(fileChannel, wrotePosition, new byte[40*1024]);
+            }
+        });
+        long start = System.currentTimeMillis();
+        for(int i=0;i<count;i++){
+            executor.execute(()->{
+                countDownLatch.countDown();
+                try {
+                    cyclicBarrier.await(1,TimeUnit.SECONDS);
+                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        countDownLatch.await();
+        System.out.println("cyclicBarrier_rwd cost:"+(System.currentTimeMillis()-start));
         fileChannel.close();
         new File(GATHER_PATH).delete();
     }
@@ -134,7 +168,8 @@ public class ThreadsGatherFlushExampleTest {
             public void run() {
                 try {
                     // System.out.println("force:"+flushNum.getAndIncrement());
-                    fileChannel.force(true);
+                    write(fileChannel, wrotePosition, new byte[40*1024]);
+                    fileChannel.force(false);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -143,7 +178,6 @@ public class ThreadsGatherFlushExampleTest {
         long start = System.currentTimeMillis();
         for(int i=0;i<count;i++){
             executor.execute(()->{
-                write(fileChannel, wrotePosition, new byte[4*1024]);
                 countDownLatch.countDown();
                 try {
                     int ph = phaser.arrive();
@@ -177,13 +211,13 @@ public class ThreadsGatherFlushExampleTest {
                 lock.lock();
                 try {
                     awaitCount++;
-                    write(fileChannel, wrotePosition, new byte[4*1024]);
                     countDownLatch.countDown();
                     // 10个线程写完，最后一个线程执行刷盘
                     if (awaitCount < 10) {
                         condition.await(3, TimeUnit.SECONDS);
                     } else {
                         // System.out.println("force:"+flushNum.getAndIncrement());
+                        write(fileChannel, wrotePosition, new byte[40*1024]);
                         fileChannel.force(true);
                         awaitCount = 0;
                         condition.signalAll();
