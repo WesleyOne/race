@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -98,19 +99,19 @@ public class FantasticPreWriteExampleTest {
         // lock锁
         ReentrantLock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
+        AtomicInteger arrivalNum = new AtomicInteger();
         long start = System.currentTimeMillis();
         for(int i=0;i<count;i++){
             executor.execute(()->{
                 lock.lock();
                 try {
-                    awaitCount++;
                     writeBuffer.put(ByteBuffer.wrap(new byte[4*1024]));
                     countDownLatch.countDown();
                     // 10个线程写完，最后一个线程执行刷盘
-                    if (awaitCount < 10) {
+                    if (arrivalNum.incrementAndGet() < 10) {
                         condition.await(3, TimeUnit.SECONDS);
                     } else {
-                        awaitCount = 0;
+                        arrivalNum.set(0);
                         writeBuffer.flip();
                         fileChannel.write(writeBuffer.slice());
                         fileChannel.force(true);
@@ -152,19 +153,19 @@ public class FantasticPreWriteExampleTest {
         // lock锁
         ReentrantLock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
+        AtomicInteger arrivalNum = new AtomicInteger();
         long start = System.currentTimeMillis();
         for(int i=0;i<count;i++){
             executor.execute(()->{
                 lock.lock();
                 try {
-                    awaitCount++;
                     writeBuffer.put(ByteBuffer.wrap(new byte[4*1024]));
                     countDownLatch.countDown();
                     // 10个线程写完，最后一个线程执行刷盘
-                    if (awaitCount < 10) {
+                    if (arrivalNum.incrementAndGet() < 10) {
                         condition.await(3, TimeUnit.SECONDS);
                     } else {
-                        awaitCount = 0;
+                        arrivalNum.set(0);
                         writeBuffer.flip();
                         fileChannel.write(writeBuffer.slice());
                         fileChannel.force(true);
@@ -194,19 +195,19 @@ public class FantasticPreWriteExampleTest {
         // lock锁
         ReentrantLock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
+        AtomicInteger arrivalNum = new AtomicInteger();
         long start = System.currentTimeMillis();
         for(int i=0;i<count;i++){
             executor.execute(()->{
                 lock.lock();
                 try {
-                    awaitCount++;
                     writeBuffer.put(ByteBuffer.wrap(new byte[4*1024]));
                     countDownLatch.countDown();
                     // 10个线程写完，最后一个线程执行刷盘
-                    if (awaitCount < 10) {
+                    if (arrivalNum.incrementAndGet() < 10) {
                         condition.await(3, TimeUnit.SECONDS);
                     } else {
-                        awaitCount = 0;
+                        arrivalNum.set(0);
                         writeBuffer.flip();
                         fileChannel.write(writeBuffer.slice());
                         fileChannel.force(true);
